@@ -51,6 +51,14 @@ def group_lookup():
     return {h.lower(): g for g, handles in CONFIG["groups"].items() for h in handles}
 
 
+def kind_allowed(owner, kind):
+    """Board-wide format switch plus optional per-page limits from config "format_only"."""
+    if kind == "image" and not CONFIG["scoring"]["include_single_images"]:
+        return False
+    only = {h.lower(): v for h, v in CONFIG.get("format_only", {}).items()}.get(owner)
+    return not only or kind in only
+
+
 # ---------------------------------------------------------------- Apify
 def apify_request(method, path, token, body=None, params=None):
     url = f"{APIFY}{path}"
@@ -132,7 +140,7 @@ def normalise(item, lookup):
     if kind == "image" and not CONFIG["scoring"]["include_single_images"]:
         return None
     owner = owner_of(item, lookup)
-    if owner not in lookup:
+    if owner not in lookup or not kind_allowed(owner, kind):
         return None
 
     likes = item.get("likesCount")
@@ -174,7 +182,12 @@ def merge(history, fresh):
             merged["early"] = metric(merged)[1]  # how it looked on day one
         history["posts"][post["code"]] = merged
     cutoff = NOW - dt.timedelta(days=CONFIG["scoring"]["baseline_days"] + 2)
-    history["posts"] = {c: p for c, p in history["posts"].items() if parse_ts(p["posted"]) >= cutoff}
+    lookup = group_lookup()
+    history["posts"] = {
+        c: {**p, "group": lookup[p["owner"]]}
+        for c, p in history["posts"].items()
+        if parse_ts(p["posted"]) >= cutoff and p.get("owner") in lookup and kind_allowed(p["owner"], p.get("kind"))
+    }
     return history
 
 
