@@ -216,7 +216,7 @@ function render() {
   const winLabel = WINDOWS.find(([h]) => h === state.win)[1];
 
   const count = (k) => DATA.posts.filter((p) => matches(p, k)).length;
-  seg($("kind"), [["carousel", "Carousels"], ["image", "Single images"], ["reel", "Reels"]], state.kind, (v) => {
+  seg($("kind"), [["carousel", "Carousels"], ["reel", "Reels"]], state.kind, (v) => {
     state.kind = v; state.limit = 25;
     if (!sortOptions().some(([k]) => k === state.sort)) state.sort = "score";
     render();
@@ -270,7 +270,7 @@ function init() {
   if (DATA.sample) $("sample").innerHTML = `<div class="sample-note">Preview with made-up numbers. Real posts appear after the first scheduled run.</div>`;
   $("sort").onchange = (e) => { state.sort = e.target.value; render(); };
   $("foot").innerHTML = `
-    <p>Tracking ${DATA.pages_tracked} pages. The multiplier compares each post with that page's typical post of the same type: views for reels, likes for carousels and single images. Posts under three days old are compared with how the page's other posts looked on day one, once the board has a few days of history.</p>
+    <p>Tracking ${DATA.pages_tracked} pages. The multiplier compares each post with that page's typical post of the same type: views for reels, likes for carousels. Posts under three days old are compared with how the page's other posts looked on day one, once the board has a few days of history.</p>
     ${DATA.silent_pages.length ? `<p>No posts in the last 7 days from ${DATA.silent_pages.map((h) => "@" + esc(h)).join(", ")}. If that looks wrong, check the handle spelling in config.json.</p>` : ""}`;
   render();
 }
